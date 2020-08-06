@@ -3,13 +3,16 @@ Gridworld modeling motion of a constant horizontal velocity UUV in waters
 with ocean currents.
 """
 
+# import required packages
+import time
 import ast
 import numpy as np
 from fimdp import consMDP
+import random
 from decimal import Decimal
+from matplotlib import pyplot as plt
 from scipy.stats import norm
 from IPython import display
-from matplotlib import pyplot as plt
 import matplotlib.animation as animation
 
 
@@ -334,9 +337,8 @@ class Env:
         fig, ax = plt.subplots()
         ax.axis('off')
         plt.title("Agent Energy: {}, Time Steps: {}".format(self.agent_energy, self.time_steps))
-        plt.imshow(img_data)
-        plt.draw(),plt.pause(0.0001)
-        return 
+        plt.imshow(img_data) 
+        plt.show()
 
 
     def animate_strategy(self, strategy=None, num_steps=100, interval=100):
@@ -351,6 +353,8 @@ class Env:
         ax = fig.gca()
         ax.axis('off')
         im = plt.imshow(self._states_to_colors(), animated=True)
+        plt.close()
+        
         def updatefig(frame_count):
             
             if frame_count == 0:
@@ -361,10 +365,7 @@ class Env:
             im.set_array(self._states_to_colors())
             ax.set_title("Agent Energy: {}, Time Steps: {}".format(self.agent_energy, self.time_steps))
             return im
-        ani = animation.FuncAnimation(fig, updatefig, frames=num_steps, interval=interval)
-        video = ani.to_html5_video()
-        display.display(display.HTML(video))
-        plt.close()
+        return animation.FuncAnimation(fig, updatefig, frames=num_steps, interval=interval)
         
         
     def _states_to_colors_dev(self):
@@ -409,6 +410,8 @@ class Env:
         ax = fig.gca()
         ax.axis('off')
         im = plt.imshow(self._states_to_colors_dev(), animated=True)
+        plt.close()
+        
         def updatefig(frame_count):
             if frame_count == 0:
                 im.set_array(self._states_to_colors())
@@ -418,7 +421,11 @@ class Env:
             im.set_array(self._states_to_colors_dev())
             ax.set_title("Agent Energy: {}, Time Steps: {}".format(self.agent_energy, self.time_steps))
             return im
-        ani = animation.FuncAnimation(fig, updatefig, frames=num_steps, interval=interval)
-        video = ani.to_html5_video()
-        display.display(display.HTML(video))
-        plt.close()
+        return animation.FuncAnimation(fig, updatefig, frames=num_steps, interval=interval)
+
+
+    def _repr_png_(self):
+        '''
+        Show graphical representation in notebooks.
+        '''
+        return self.render_grid()
