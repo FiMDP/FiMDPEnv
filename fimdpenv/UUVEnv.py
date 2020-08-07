@@ -56,6 +56,7 @@ class Env:
         self.actions_history = []
         self.targets_history = []
         self.time_steps = 0
+        self.consmdp = None
         
 
         # initialize required variables
@@ -309,9 +310,20 @@ class Env:
             fr = mdp.state_with_name(act["from"])
             mdp.add_action(fr, act["dist"], label, act["cons"])
 
-        # Get targets
-        target_set = set(self.target_list)
-        return (mdp, target_set)
+        return mdp
+    
+    
+    def get_consmdp(self):
+        """
+        Method that returns the consMDP object if it already exists or otherwise
+        generates a new consMDP object using create_consmdp() method
+        """
+        
+        if self.consmdp == None:
+            self.consmdp = self.create_consmdp(self)
+            return self.consmdp
+        else:
+            return self.consmdp
 
     
     def _states_to_colors(self):
