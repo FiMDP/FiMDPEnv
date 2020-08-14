@@ -4,15 +4,12 @@ with ocean currents.
 """
 
 # import required packages
-import time
 import ast
 import numpy as np
 from fimdp import consMDP
-import random
 from decimal import Decimal
 from matplotlib import pyplot as plt
 from scipy.stats import norm
-from IPython import display
 import matplotlib.animation as animation
 
 
@@ -23,7 +20,7 @@ COLORS = {0:np.array([0.85,1.0,1.0]), 1:np.array([0.54,0.54,0.54]), \
           4:np.array([1.0,0.37,0.008]), 5:np.array([0.0,0.0,1.0])}
 
 
-class Env:
+class SingleAgentEnv:
 
     def __init__(self, grid_size, agent_capacity, reload_list, target_list, init_state=None, agent_velocity=5, heading_sd=0.524, weakaction_cost=1, strongaction_cost=2):
         """Class that models a Markov Decision Process where the agent and the environment model the dynamics of a UUV and 
@@ -274,7 +271,7 @@ class Env:
     
     def create_consmdp(self):
         """
-        Method to export the martian gridworld and target states into a pre-defined
+        Method to export the UUV gridworld and target states into a pre-defined
         standard consMDP form. Returns MDP object and the target set.
         """
         mdp = consMDP.ConsMDP()
@@ -309,21 +306,21 @@ class Env:
         for label, act in actions.items():
             fr = mdp.state_with_name(act["from"])
             mdp.add_action(fr, act["dist"], label, act["cons"])
-
-        return mdp
+        
+        self.consmdp = mdp
     
     
     def get_consmdp(self):
         """
-        Method that returns the consMDP object if it already exists or otherwise
-        generates a new consMDP object using create_consmdp() method
+        Method that returns the consMDP object and target set that already exists
+        or generates it if it does not exist
         """
         
         if self.consmdp == None:
-            self.consmdp = self.create_consmdp(self)
-            return self.consmdp
+            self.create_consmdp()
+            return (self.consmdp, self.target_list)
         else:
-            return self.consmdp
+            return (self.consmdp, self.target_list)
 
     
     def _states_to_colors(self):
