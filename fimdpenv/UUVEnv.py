@@ -85,22 +85,22 @@ class SingleAgentEnv:
 
         for i in range(self.num_states):
             for j in range(self.num_actions):
-                if j in [2, 6]:
+                if j in [0, 4]:
                     if (i % self.grid_size[1] == self.grid_size[1]-1):
                         self.trans_prob[i, j, i] = Decimal(str(1))
                     else:
                         self.trans_prob[i, j, i+1] = Decimal(str(1))
-                elif j in [0, 4]:
+                elif j in [1, 5]:
                     if (i - self.grid_size[1] < 0):
                         self.trans_prob[i, j, i] = Decimal(str(1))
                     else:
                         self.trans_prob[i, j, i-self.grid_size[1]] = Decimal(str(1))
-                elif j in [3, 7]:
+                elif j in [2, 6]:
                     if (i % self.grid_size[1] == 0):
                         self.trans_prob[i, j, i] = Decimal(str(1))
                     else:
                         self.trans_prob[i, j, i-1] = Decimal(str(1))
-                elif j in [1, 5]:
+                elif j in [3, 7]:
                     if (i + self.grid_size[1] >= self.num_states):
                         self.trans_prob[i, j, i] = Decimal(str(1))
                     else:
@@ -485,22 +485,22 @@ class SynchronousMultiAgentEnv:
 
         for i in range(self.num_states):
             for j in range(self.num_actions):
-                if j in [2, 6]:
+                if j in [0, 4]:
                     if (i % self.grid_size[1] == self.grid_size[1]-1):
                         self.trans_prob[i, j, i] = Decimal(str(1))
                     else:
                         self.trans_prob[i, j, i+1] = Decimal(str(1))
-                elif j in [0, 4]:
+                elif j in [1, 5]:
                     if (i - self.grid_size[1] < 0):
                         self.trans_prob[i, j, i] = Decimal(str(1))
                     else:
                         self.trans_prob[i, j, i-self.grid_size[1]] = Decimal(str(1))
-                elif j in [3, 7]:
+                elif j in [2, 6]:
                     if (i % self.grid_size[1] == 0):
                         self.trans_prob[i, j, i] = Decimal(str(1))
                     else:
                         self.trans_prob[i, j, i-1] = Decimal(str(1))
-                elif j in [1, 5]:
+                elif j in [3, 7]:
                     if (i + self.grid_size[1] >= self.num_states):
                         self.trans_prob[i, j, i] = Decimal(str(1))
                     else:
