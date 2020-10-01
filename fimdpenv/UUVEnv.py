@@ -16,7 +16,7 @@ import matplotlib.animation as animation
 class SingleAgentEnv:
 
     def __init__(self, grid_size, capacity, reload, target, init_state=None, enhanced_actionspace=0, velocity=5, heading_sd=0.524, weakaction_cost=1, strongaction_cost=2):
-        """Class that models a Markov Decision Process where the agent and the environment model the dynamics of a UUV and 
+        """Class that models a Markov decision process where the agent and the environment model the dynamics of a UUV and 
         the ocean currents it is operating in.  
         """
 
@@ -37,7 +37,7 @@ class SingleAgentEnv:
         self.num_timesteps = 0
         
         # initialize required variables
-        self.num_states = grid_size[0]*grid_size[1]
+        self.num_states = self.grid_size[0]*self.grid_size[1]
         if enhanced_actionspace == 0:
             self.num_actions = 8
             self.weak_actions = [0,1,2,3]
