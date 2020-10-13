@@ -255,7 +255,7 @@ class SynchronousMultiAgentEnv:
         or generates the consMDP object if it does not exist and then returns it.
         """
         
-        if self.consmdp == None:
+        if self.consmdp is None:
             self.create_consmdp()
             return (self.consmdp, self.targets)
         else:
@@ -295,24 +295,24 @@ class SynchronousMultiAgentEnv:
         of the agents and clears any stored data.
         """
         
-        if (init_states!=None):
+        if (init_states is not None):
             if (len(init_states)!=self.num_agents) or not (all(s in self.states for s in init_states)):
                 raise Exception('elements of the list init_states of length num_agents must be in the state space')
-        if (reset_energies!=None):
+        if (reset_energies is not None):
             if (len(reset_energies)!=self.num_agents) or not (all(e > self.waction_cost for e in reset_energies)):
                 raise Exception('reset energy levels for each agent must be greater than weak action cost')
             
-        if init_states == None:
+        if init_states is None:
             self.positions = np.random.choice(self.states, self.num_agents)
         else:
             self.positions = init_states
-        if reset_energies == None:
+        if reset_energies is None:
             self.energies = copy.deepcopy(self.capacities)
         else:
             self.energies = reset_energies
             
         for agent in self.agents:
-            if self.strategies[agent] != None:
+            if self.strategies[agent] is not None:
                 self.strategies[agent].reset(init_energy=self.energies[agent], init_state=self.positions[agent])
             else:
                 pass
@@ -333,11 +333,11 @@ class SynchronousMultiAgentEnv:
         and other info. Returns done to show the status of different agents.
         """
         
-        if strategies==None:
+        if strategies is None:
             strategies = self.strategies
-        if states==None:
+        if states is None:
             states = self.positions
-        if energies==None:
+        if energies is None:
             energies = self.energies
         
         # selection action and update states
@@ -404,7 +404,7 @@ class SynchronousMultiAgentEnv:
             data[cell//self.grid_size[1], cell%self.grid_size[1]] = COLORS_ENV[4] # reloads
         for agent in self.agents:
             data[self.positions[agent]//self.grid_size[1], self.positions[agent]%self.grid_size[1]] = COLORS_AGENTS[agent] # current state
-            if self.init_states != None:
+            if self.init_states is not None:
                 data[self.init_states[agent]//self.grid_size[1], self.init_states[agent]%self.grid_size[1]] = COLORS_ENV[5] # home/base        
         return data
 
@@ -430,7 +430,7 @@ class SynchronousMultiAgentEnv:
         resultant trajectory.
         """
         
-        if strategies != None:
+        if strategies is not None:
             self.strategies = strategies
         self.reset(self.init_states)
         fig = plt.figure()
@@ -469,7 +469,7 @@ class SingleAgentEnv(SynchronousMultiAgentEnv):
     """
     
     def __init__(self, grid_size, capacity, reloads, targets, init_state=None, enhanced_actionspace=0, weakaction_cost=1, strongaction_cost=2, velocity=5, heading_sd=0.524):
-        if init_state==None:
+        if init_state is None:
             init_states = None
         else:
             init_states = [init_state]
@@ -478,7 +478,7 @@ class SingleAgentEnv(SynchronousMultiAgentEnv):
        
     def update_strategy(self, strategy, **kwargs):
         agent = kwargs.get('agent', None)
-        if agent == None:
+        if agent is None:
             super().update_strategy(strategy, 0)
         else:
             super().update_strategy(strategy, agent)
@@ -487,13 +487,13 @@ class SingleAgentEnv(SynchronousMultiAgentEnv):
         super().create_counterstrategies(solver, objective, threshold)
       
     def reset(self, init_state=None, reset_energy=None):
-        if init_state == None:
+        if init_state is None:
             init_states = None
-        elif init_state == self.init_states:
+        elif init_state is self.init_states:
             init_states = self.init_states
         else:
             init_states = [init_state]
-        if reset_energy == None:
+        if reset_energy is None:
             reset_energies = None
         else:
             reset_energies = [reset_energy]
@@ -501,15 +501,15 @@ class SingleAgentEnv(SynchronousMultiAgentEnv):
         self.allocate_targets([self.targets])
         
     def step(self, strategy=None, state=None, energy=None, do_render=0):
-        if strategy == None:
+        if strategy is None:
             strategies = None
         else:
             strategies = [strategy]
-        if state == None:
+        if state is None:
             states = None
         else:
             states = [state]
-        if energy == None:
+        if energy is None:
             energies = None
         else:
             energies = [energy]
@@ -517,7 +517,7 @@ class SingleAgentEnv(SynchronousMultiAgentEnv):
     
     
     def animate_simulation(self, strategy=None, num_steps=100, interval=100):
-        if strategy == None:
+        if strategy is None:
             return super().animate_simulation(strategy, num_steps, interval)
         else:
             return super().animate_simulation([strategy], num_steps, interval)
