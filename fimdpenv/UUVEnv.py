@@ -79,7 +79,7 @@ class SynchronousMultiAgentEnv:
         # initialize environment and create consmdp
         self.trans_prob = self._generate_dynamics()
         self._create_agents_colors()
-        self.reset(self.init_states)
+        self.reset()
         self._add_reloads()
         self.create_consmdp()
 
@@ -290,22 +290,33 @@ class SynchronousMultiAgentEnv:
         
     def reset(self, init_states=None, reset_energies=None):
         """
-        Reset the position of the agents to init_states (if given) or to randomly
-        selected states in the state space. Also resets the energy to the capacity
-        of the agents and clears any stored data.
+        Reset the position of the agents to init_states (if given) or to the 
+        originally specified initial state. In the case no initial state was 
+        specified while creating the instance, or when init_states="random", 
+        reset position of the agent to randomly selected initial states. 
+        Also resets the energy to the capacity  of the agents and clears any 
+        stored data.
         """
         
-        if (init_states is not None):
+        if (init_states is not None) and (init_states!="random"):
             if (len(init_states)!=self.num_agents) or not (all(s in self.states for s in init_states)):
-                raise Exception('elements of the list init_states of length num_agents must be in the state space')
+                raise Exception('Invalid input argument init_states. Input should be None, "random", or a list of len num_agents.')
         if (reset_energies is not None):
             if (len(reset_energies)!=self.num_agents) or not (all(e > self.waction_cost for e in reset_energies)):
                 raise Exception('reset energy levels for each agent must be greater than weak action cost')
             
         if init_states is None:
+            if self.init_states is not None:
+                self.positions = copy.deepcopy(self.init_states)
+            else:
+                self.positions = np.random.choice(self.states, self.num_agents)
+                self.init_states = copy.deepcopy(self.position)
+        elif init_states == "random":
             self.positions = np.random.choice(self.states, self.num_agents)
+            self.init_states = copy.deepcopy(self.positions)
         else:
             self.positions = init_states
+            self.init_states = copy.deepcopy(self.positions)
         if reset_energies is None:
             self.energies = copy.deepcopy(self.capacities)
         else:
@@ -379,6 +390,30 @@ class SynchronousMultiAgentEnv:
         self.agents_colors = agents_colors      
 
 
+    def get_state_id(self, x,y):
+        """
+        Returns the internal state ID for a cell with coordinates (x,y)
+        """
+        if not (0 <= x < self.grid_size[0]) or not (0 <= y < self.grid_size[1]):
+            raise Exception("Input x and y must be valid coordinates in the current grid world")
+        
+        state_id = x*self.grid_size[1] + y
+        return state_id
+        
+    
+    def get_state_coord(self, state_id):
+        """
+        Returns the coordinates tuple (x,y) of a cell with the input state_id 
+        as its state ID.
+        """
+        if state_id not in self.states:
+            raise Exception("The input is not a valid state ID")
+        
+        x = state_id//self.grid_size[1]
+        y = state_id%self.grid_size[1]
+        return (x,y)
+
+
     def _states_to_colors(self):
         '''
         Assign colors to the cells based on their current identity for visualization
@@ -397,15 +432,20 @@ class SynchronousMultiAgentEnv:
         data[:] = COLORS_ENV[0] # baseline state color
         for agent in self.agents:
             for cell in self.state_histories[agent]:
-                data[cell//self.grid_size[1], cell%self.grid_size[1]] = COLORS_AGENTS[agent] # history
+                (x,y) = self.get_state_coord(cell)
+                data[x, y] = COLORS_AGENTS[agent] # history
         for cell in self.targets:
-            data[cell//self.grid_size[1], cell%self.grid_size[1]] = COLORS_ENV[3] # targets
+            (x,y) = self.get_state_coord(cell)
+            data[x,y] = COLORS_ENV[3] # targets
         for cell in self.reloads:
-            data[cell//self.grid_size[1], cell%self.grid_size[1]] = COLORS_ENV[4] # reloads
+            (x,y) = self.get_state_coord(cell)
+            data[x,y] = COLORS_ENV[4] # reloads
         for agent in self.agents:
-            data[self.positions[agent]//self.grid_size[1], self.positions[agent]%self.grid_size[1]] = COLORS_AGENTS[agent] # current state
+            (x,y) = self.get_state_coord(self.positions[agent])
+            data[x,y] = COLORS_AGENTS[agent] # current state
             if self.init_states is not None:
-                data[self.init_states[agent]//self.grid_size[1], self.init_states[agent]%self.grid_size[1]] = COLORS_ENV[5] # home/base        
+                (x,y) = self.get_state_coord(self.init_states[agent])
+                data[x,y] = COLORS_ENV[5] # home/base        
         return data
 
 
@@ -453,6 +493,7 @@ class SynchronousMultiAgentEnv:
             ax.set_title("Agent Energy: {}, Time Steps: {}".format(energies_str, self.num_timesteps))
             return im
         return animation.FuncAnimation(fig, updatefig, frames=num_steps, interval=interval)
+
 
     def _repr_png_(self):
         """
