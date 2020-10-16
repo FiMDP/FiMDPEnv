@@ -204,7 +204,7 @@ class SynchronousMultiAgentEnv:
             agent_posstates.append(i)
         for i in list(agent_posstates):
             prob = agent_dist[i]
-            dist[i] = Decimal(str(round(prob,2)))
+            dist[i] = round(prob,2)
         return dist
     
 
@@ -310,7 +310,7 @@ class SynchronousMultiAgentEnv:
                 self.positions = copy.deepcopy(self.init_states)
             else:
                 self.positions = np.random.choice(self.states, self.num_agents)
-                self.init_states = copy.deepcopy(self.position)
+                self.init_states = copy.deepcopy(self.positions)
         elif init_states == "random":
             self.positions = np.random.choice(self.states, self.num_agents)
             self.init_states = copy.deepcopy(self.positions)
