@@ -3,7 +3,6 @@ import numpy as np
 from fimdp.core import ConsMDP, CounterStrategy
 from fimdp.energy_solvers import GoalLeaningES, BasicES
 from fimdp.objectives import AS_REACH, BUCHI, MIN_INIT_CONS, POS_REACH, SAFE
-from decimal import Decimal
 from matplotlib import pyplot as plt
 from scipy.stats import vonmises
 import matplotlib.animation as animation
@@ -95,46 +94,46 @@ class SynchronousMultiAgentEnv:
             for a in self.actions:
                 if a in [0, 4]:
                     if (s % self.grid_size[1] == self.grid_size[1]-1):
-                        self.trans_prob[s, a, s] = Decimal(str(1))
+                        self.trans_prob[s, a, s] = 1.0
                     else:
-                        self.trans_prob[s, a, s+1] = Decimal(str(1))
+                        self.trans_prob[s, a, s+1] = 1.0
                 elif a in [1, 5]:
                     if (s - self.grid_size[1] < 0):
-                        self.trans_prob[s, a, s] = Decimal(str(1))
+                        self.trans_prob[s, a, s] = 1.0
                     else:
-                        self.trans_prob[s, a, s-self.grid_size[1]] = Decimal(str(1))
+                        self.trans_prob[s, a, s-self.grid_size[1]] = 1.0
                 elif a in [2, 6]:
                     if (s % self.grid_size[1] == 0):
-                        self.trans_prob[s, a, s] = Decimal(str(1))
+                        self.trans_prob[s, a, s] = 1.0
                     else:
-                        self.trans_prob[s, a, s-1] = Decimal(str(1))
+                        self.trans_prob[s, a, s-1] = 1.0
                 elif a in [3, 7]:
                     if (s + self.grid_size[1] >= self.num_states):
-                        self.trans_prob[s, a, s] = Decimal(str(1))
+                        self.trans_prob[s, a, s] = 1.0
                     else:
-                        self.trans_prob[s, a, s+self.grid_size[1]] = Decimal(str(1))
+                        self.trans_prob[s, a, s+self.grid_size[1]] = 1.0
                     
                 if self.num_actions == 16:
                     if a in [8, 12]:
                         if (s - self.grid_size[1] < 0) or (s % self.grid_size[1] == self.grid_size[1]-1):
-                            self.trans_prob[s, a, s] = Decimal(str(1))
+                            self.trans_prob[s, a, s] = 1.0
                         else:
-                            self.trans_prob[s, a, s-self.grid_size[1]+1] = Decimal(str(1))
+                            self.trans_prob[s, a, s-self.grid_size[1]+1] = 1.0
                     elif a in [9, 13]:
                         if (s - self.grid_size[1] < 0) or (s % self.grid_size[1] == 0):
-                            self.trans_prob[s, a, s] = Decimal(str(1))
+                            self.trans_prob[s, a, s] = 1.0
                         else:
-                            self.trans_prob[s, a, s-self.grid_size[1]-1] = Decimal(str(1))
+                            self.trans_prob[s, a, s-self.grid_size[1]-1] = 1.0
                     elif a in [10, 14]:
                         if (s + self.grid_size[1] >= self.num_states) or (s % self.grid_size[1] == 0):
-                            self.trans_prob[s, a, s] = Decimal(str(1))
+                            self.trans_prob[s, a, s] = 1.0
                         else:
-                            self.trans_prob[s, a, s+self.grid_size[1]-1] = Decimal(str(1))
+                            self.trans_prob[s, a, s+self.grid_size[1]-1] = 1.0
                     elif a in [11, 15]:
                         if (s + self.grid_size[1] >= self.num_states) or (s % self.grid_size[1] == self.grid_size[1]-1):
-                            self.trans_prob[s, a, s] = Decimal(str(1))
+                            self.trans_prob[s, a, s] = 1.0
                         else:
-                            self.trans_prob[s, a, s+self.grid_size[1]+1] = Decimal(str(1))                    
+                            self.trans_prob[s, a, s+self.grid_size[1]+1] = 1.0                    
                             
                 # generate stochasic dynamics for weak actions
                 if not ((s - self.grid_size[1] < 0) or
@@ -160,21 +159,21 @@ class SynchronousMultiAgentEnv:
         tp = np.zeros(self.num_states)
         
         if self.num_actions == 8:
-            tp[s+1] = Decimal(str(round((rv.cdf(0.25*np.pi) - rv.cdf(-0.25*np.pi)),2)))
-            tp[s-self.grid_size[1]] = Decimal(str(round(rv.cdf(0.75*np.pi) - rv.cdf(0.25*np.pi),2)))
-            tp[s-1] = Decimal(str(round(rv.cdf(np.pi) - rv.cdf(0.75*np.pi) + rv.cdf(-0.75*np.pi) - rv.cdf(-np.pi),2)))
-            tp[s+self.grid_size[1]] =  Decimal(str(1.0)) - Decimal(str(np.sum(copy.deepcopy(tp))))  
+            tp[s+1] = round((rv.cdf(0.25*np.pi) - rv.cdf(-0.25*np.pi)),2)
+            tp[s-self.grid_size[1]] = round(rv.cdf(0.75*np.pi) - rv.cdf(0.25*np.pi),2)
+            tp[s-1] = round(rv.cdf(np.pi) - rv.cdf(0.75*np.pi) + rv.cdf(-0.75*np.pi) - rv.cdf(-np.pi),2)
+            tp[s+self.grid_size[1]] =  1.0 - np.sum(copy.deepcopy(tp))
             tp = tp.round(2)
 
         elif self.num_actions == 16:
-            tp[s+1] = Decimal(str(round(rv.cdf(0.125*np.pi) - rv.cdf(-0.125*np.pi),2)))
-            tp[s-self.grid_size[1]] = Decimal(str(round(rv.cdf(0.625*np.pi) - rv.cdf(0.375*np.pi),2)))
-            tp[s-1] = Decimal(str(round(rv.cdf(np.pi) - rv.cdf(0.875*np.pi) + rv.cdf(-0.875*np.pi) - rv.cdf(-np.pi),2)))
-            tp[s+self.grid_size[1]] = Decimal(str(round(rv.cdf(-0.375*np.pi) - rv.cdf(-0.625*np.pi),2)))
-            tp[s-self.grid_size[1]+1] = Decimal(str(round(rv.cdf(0.375*np.pi) - rv.cdf(0.125*np.pi),2)))
-            tp[s-self.grid_size[1]-1] = Decimal(str(round(rv.cdf(0.875*np.pi) - rv.cdf(0.625*np.pi),2)))
-            tp[s+self.grid_size[1]-1] = Decimal(str(round(rv.cdf(-0.625*np.pi) - rv.cdf(-0.875*np.pi),2)))
-            tp[s+self.grid_size[1]+1] =  Decimal(str(1.0)) - Decimal(str(np.sum(copy.deepcopy(tp))))  
+            tp[s+1] = round(rv.cdf(0.125*np.pi) - rv.cdf(-0.125*np.pi),2)
+            tp[s-self.grid_size[1]] = round(rv.cdf(0.625*np.pi) - rv.cdf(0.375*np.pi),2)
+            tp[s-1] = round(rv.cdf(np.pi) - rv.cdf(0.875*np.pi) + rv.cdf(-0.875*np.pi) - rv.cdf(-np.pi),2)
+            tp[s+self.grid_size[1]] = round(rv.cdf(-0.375*np.pi) - rv.cdf(-0.625*np.pi),2)
+            tp[s-self.grid_size[1]+1] = round(rv.cdf(0.375*np.pi) - rv.cdf(0.125*np.pi),2)
+            tp[s-self.grid_size[1]-1] = round(rv.cdf(0.875*np.pi) - rv.cdf(0.625*np.pi),2)
+            tp[s+self.grid_size[1]-1] = round(rv.cdf(-0.625*np.pi) - rv.cdf(-0.875*np.pi),2)
+            tp[s+self.grid_size[1]+1] =  1.0 - np.sum(copy.deepcopy(tp))  
             tp = tp.round(2)
          
         if (not np.all(tp>=0)) or (abs(np.sum(tp) - 1.0) >=  1e-8):
