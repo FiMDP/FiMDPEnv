@@ -1,7 +1,8 @@
-fimdp>=1.0.2
+fimdp>=2.0.0
 numpy>=1.18.5
 matplotlib>=3.2.2
 scipy>=1.5.0
 ipython>=7.16.1
-folium>=0.10.1
-networkx>=2.4
+networkx>=2.5
+folium>=0.11.0
+

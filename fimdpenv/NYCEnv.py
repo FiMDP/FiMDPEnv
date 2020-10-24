@@ -1,6 +1,7 @@
 """
 Simulation environment modeling the stochastic energy consumption of an AEV
-traversing the streets of Manhattan, NY
+traversing the streets in a given region of interest. Requires energy
+consumption and street network data as inputs
 """
 
 import os
@@ -17,6 +18,7 @@ from fimdp import consMDP
 from energy_solver import BUCHI
 import matplotlib.pyplot as plt
 from matplotlib.ticker import PercentFormatter
+
 
 
 """
