@@ -31,5 +31,5 @@ If you have any trouble with the installation, or have any questions, raise an i
 
 
 
-[FiMDP]: (https://github.com/xblahoud/FiMDP)
+[FiMDP]: (https://github.com/FiMDP/FiMDP)
 [Jupyter]: https://jupyter.org
