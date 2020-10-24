@@ -11,17 +11,17 @@ pip install -U fimdpenv
 
 # Usage and Examples
 
-The directory [examples](examples/) contains several [Jupyter] notebooks that explain how to create instances of different environments and interface them with FiMDP. The following visualizations illustrate different environments currently available in FiMDPEnv. These environments model (i) the stochastic dynamics of one or more unmanned underwater vehicles (UUVs) operating with limited onboard energy storage capacity, and, (ii) the stochastic energy consumption of an autonomous electric vehicle (AEV) operating in the busy streets of Manhattan, New York.
+The directory [examples](https://github.com/FiMDP/FiMDPEnv/tree/master/examples) contains several [Jupyter] notebooks that explain how to create instances of different environments and interface them with FiMDP. The following visualizations illustrate different environments currently available in FiMDPEnv. These environments model (i) the stochastic dynamics of one or more unmanned underwater vehicles (UUVs) operating with limited onboard energy storage capacity, and, (ii) the stochastic energy consumption of an autonomous electric vehicle (AEV) operating in the busy streets of Manhattan, New York.
 
 
 <p align="center">
-<img src="images/uuvenvdemo.gif" alt="Multiple agents following energy-aware policies in SynchronousMultiAgentEnv environment." align="center" height="250" width="350" >
+<img src="https://raw.githubusercontent.com/FiMDP/FiMDPEnv/master/images/uuvenvdemo.gif" alt="Multiple agents following energy-aware policies in SynchronousMultiAgentEnv environment." align="center" height="250" width="350" >
 <br>
 <em>Multiple agents following energy-aware policies in UUVEnv environment.</em>
 </p>
 
 <p align="center">
-<img src="images/aevenvdemo.png" alt="An agent following an energy-aware policy in AEVEnv." align="center" height="250" width="350" >
+<img src="https://raw.githubusercontent.com/FiMDP/FiMDPEnv/master/images/aevenvdemo.png" alt="An agent following an energy-aware policy in AEVEnv." align="center" height="250" width="350" >
 <br>
 <em>An agent following an energy-aware policy in AEVEnv.</em>
 </p>
