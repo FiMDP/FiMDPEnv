@@ -5,3 +5,4 @@ scipy>=1.5.0
 ipython>=7.16.1
 networkx>=2.5
 folium>=0.11.0
+
