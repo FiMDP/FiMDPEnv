@@ -4,11 +4,9 @@ traversing the streets in a given region of interest. Requires energy
 consumption and street network data as inputs
 """
 
-# import required packages
 import json
 import time
 import folium
-from shapely import wkt
 import numpy as np
 import networkx as nx
 from folium import plugins
@@ -248,8 +246,6 @@ class AEVEnv:
         
         # Load NYC Geodata
         G = nx.MultiDiGraph(nx.read_graphml(self.mapfile))
-        for _, _, data in G.edges(data=True, keys=False):
-            data["geometry"] = wkt.loads(data["geometry"])
         for _, data in G.nodes(data=True):
             data['lat'] = float(data['lat'])
             data['lon'] = float(data['lon'])
@@ -351,7 +347,6 @@ class AEVEnv:
         # Load NYC Geodata
         G = nx.MultiDiGraph(nx.read_graphml(self.mapfile))
         for _, _, data in G.edges(data=True, keys=False):
-            data["geometry"] = wkt.loads(data["geometry"])
             data['time_mean'] = float(data['time_mean'])
         for _, data in G.nodes(data=True):
             data['lat'] = float(data['lat'])
@@ -410,6 +405,7 @@ class AEVEnv:
         t = time.time()
         path = list(zip(trajectory[:-1], trajectory[1:]))
         lines = []
+        current_positions = []
         for pair in path:
             
             t_edge = 1
@@ -419,6 +415,8 @@ class AEVEnv:
                 'dates': [time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(t)),
                            time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(t+t_edge))],
                            'color':'black'}))
+            current_positions.append(dict({'coordinates':[G.nodes[pair[1]]['lon'], G.nodes[pair[1]]['lat']],
+                        'dates': [time.strftime('%Y-%m-%dT%H:%M:%S', time.localtime(t+t_edge))]}))
             t = t+t_edge
 
         features = [{'type': 'Feature',
@@ -433,10 +431,28 @@ class AEVEnv:
                                     }
                      }
                 for line in lines]
-        data = {'type': 'FeatureCollection', 'features': features}
-        folium.plugins.TimestampedGeoJson(data,  transition_time=interval,
-                               period='PT1S', add_last_point=False, date_options='mm:ss').add_to(m)
         
+        positions = [{
+            'type': 'Feature',
+            'geometry': {
+                        'type':'Point', 
+                        'coordinates':position['coordinates']
+                        },
+            'properties': {
+                'times': position['dates'],
+                'style': {'color' : 'white'},
+                'icon': 'circle',
+                'iconstyle':{
+                    'fillColor': 'white',
+                    'fillOpacity': 1,
+                    'stroke': 'true',
+                    'radius': 2
+                }
+            }
+        }
+         for position in current_positions]
+        data_lines = {'type': 'FeatureCollection', 'features': features}
+        data_positions = {'type': 'FeatureCollection', 'features': positions}
+        folium.plugins.TimestampedGeoJson(data_lines,  transition_time=interval,
+                               period='PT1S', add_last_point=False, date_options='mm:ss', duration=None).add_to(m)      
         return m
-
-
