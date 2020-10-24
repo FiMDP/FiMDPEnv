@@ -1,4 +1,4 @@
-from fimdpenv import UUVEnv
+import UUVEnv
 import numpy as np
 import fimdp
 
