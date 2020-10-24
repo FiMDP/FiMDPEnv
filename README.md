@@ -11,9 +11,7 @@ pip install -U fimdpenv
 
 # Usage and Examples
 
-The directory [examples](examples/README.md) contains several [Jupyter] notebooks that explain how to create instances of different environments and interface them with FiMDP. 
-
-The following visualizations illustrate different environments currently available in FiMDPEnv. These environments model (i) the stochastic dynamics of one or more unmanned underwater vehicles (UUVs) operating with limited onboard energy storage capacity, and, (ii) the stochastic energy consumption of an autonomous electric vehicle (AEV) operating in the busy streets of Manhattan, New York.
+The directory [examples](examples/) contains several [Jupyter] notebooks that explain how to create instances of different environments and interface them with FiMDP. The following visualizations illustrate different environments currently available in FiMDPEnv. These environments model (i) the stochastic dynamics of one or more unmanned underwater vehicles (UUVs) operating with limited onboard energy storage capacity, and, (ii) the stochastic energy consumption of an autonomous electric vehicle (AEV) operating in the busy streets of Manhattan, New York.
 
 
 <p align="center">
