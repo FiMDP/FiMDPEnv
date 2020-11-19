@@ -304,6 +304,15 @@ class SynchronousMultiAgentEnv:
             if (len(reset_energies)!=self.num_agents) or not (all(e > self.waction_cost for e in reset_energies)):
                 raise Exception('reset energy levels for each agent must be greater than weak action cost')
             
+        if init_states is not None:
+            for idx, init_state in enumerate(init_states):
+                if type(init_state) == list or type(init_state) == tuple:
+                    init_states[idx] = self.get_state_id(init_state[0], init_state[1])
+        else:
+            for idx, init_state in enumerate(self.init_states):
+                if type(init_state) == list or type(init_state) == tuple:
+                    self.init_states[idx] = self.get_state_id(init_state[0], init_state[1])
+            
         if init_states is None:
             if self.init_states is not None:
                 self.positions = copy.deepcopy(self.init_states)
@@ -314,8 +323,17 @@ class SynchronousMultiAgentEnv:
             self.positions = np.random.choice(self.states, self.num_agents)
             self.init_states = copy.deepcopy(self.positions)
         else:
-            self.positions = init_states
+            self.positions = copy.deepcopy(init_states)
             self.init_states = copy.deepcopy(self.positions)
+            
+        for idx, target in enumerate(self.targets):
+            if type(target) == list or type(target) == tuple:
+                self.targets[idx] = self.get_state_id(target[0], target[1])
+        
+        for idx, reload in enumerate(self.reloads):
+            if type(reload) == list or type(reload) == tuple:
+                self.reloads[idx] = self.get_state_id(reload[0], reload[1])
+                   
         if reset_energies is None:
             self.energies = copy.deepcopy(self.capacities)
         else:
