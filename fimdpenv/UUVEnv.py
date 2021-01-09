@@ -135,16 +135,89 @@ class SynchronousMultiAgentEnv:
                         else:
                             self.trans_prob[s, a, s+self.grid_size[1]+1] = 1.0                    
                             
-                # generate stochasic dynamics for weak actions
-                if not ((s - self.grid_size[1] < 0) or
+                # generate stochasic dynamics for weak actions at interior states
+                if a in self.weak_actions:
+                    if not ((s - self.grid_size[1] < 0) or
                         (s + self.grid_size[1] >= self.num_states) or
                         (s % self.grid_size[1] == self.grid_size[1]-1) or
                         (s % self.grid_size[1] == 0)):
-                    if a in self.weak_actions:
                         self.trans_prob[s, a, :] = self._generate_stochastic_dynamics(s, a)
-                    
+
+                # generate stochastic dynamics for weak actions at states on edges
+                if a in self.weak_actions:
+                    if ((s - self.grid_size[1] < 0) or
+                        (s + self.grid_size[1] >= self.num_states) or
+                        (s % self.grid_size[1] == self.grid_size[1]-1) or
+                        (s % self.grid_size[1] == 0)):
+                        self.trans_prob[s, a, :] = self._generate_edge_stochastic_dynamics(s, a)
+
         return self.trans_prob
 
+    def _generate_edge_stochastic_dynamics(self, s, a):
+        """
+        Given state and action for edge states, generate the stochastic transition dynamics
+        for different settings 
+        """
+        # combined actual heading
+        actual_vx = self.agent_v*np.cos(self.action_theta[a]) + self.flow_mag[s]*np.cos(self.flow_theta[s])
+        actual_vy = self.agent_v*np.sin(self.action_theta[a]) + self.flow_mag[s]*np.sin(self.flow_theta[s])
+        actual_theta = np.arctan2(actual_vy, actual_vx)
+        rv = vonmises(1/self.agent_headingsd, actual_theta)
+        tp = np.zeros(self.num_states)
+
+        if self.num_actions == 8:
+            if (s - self.grid_size[1] < 0):
+                if (s % self.grid_size[1] == self.grid_size[1]-1):
+                    # North East
+                    tp[s-1] = round(rv.cdf(np.pi) - rv.cdf(0.75*np.pi) + rv.cdf(-0.75*np.pi) - rv.cdf(-np.pi),2)
+                    tp[s+self.grid_size[1]] =  1.0 - np.sum(copy.deepcopy(tp))
+
+                elif (s % self.grid_size[1] == 0):
+                    # North West
+                    tp[s+1] = round((rv.cdf(0.25*np.pi) - rv.cdf(-0.25*np.pi)),2)
+                    tp[s+self.grid_size[1]] =  1.0 - np.sum(copy.deepcopy(tp))
+
+                else:
+                    # Just North
+                    tp[s+1] = round((rv.cdf(0.25*np.pi) - rv.cdf(-0.25*np.pi)),2)
+                    tp[s-1] = round(rv.cdf(np.pi) - rv.cdf(0.75*np.pi) + rv.cdf(-0.75*np.pi) - rv.cdf(-np.pi),2)
+                    tp[s+self.grid_size[1]] =  1.0 - np.sum(copy.deepcopy(tp))
+
+            elif (s + self.grid_size[1] >= self.num_states):
+                if (s % self.grid_size[1] == self.grid_size[1]-1):
+                    # South East
+                    tp[s-self.grid_size[1]] = round(rv.cdf(0.75*np.pi) - rv.cdf(0.25*np.pi),2)
+                    tp[s-1] = 1.0 - np.sum(copy.deepcopy(tp))
+
+                elif (s % self.grid_size[1] == 0):
+                    # South West
+                    tp[s+1] = round((rv.cdf(0.25*np.pi) - rv.cdf(-0.25*np.pi)),2)
+                    tp[s-self.grid_size[1]] = 1.0 - np.sum(copy.deepcopy(tp))
+
+                else:
+                    # Just South
+                    tp[s+1] = round((rv.cdf(0.25*np.pi) - rv.cdf(-0.25*np.pi)),2)
+                    tp[s-self.grid_size[1]] = round(rv.cdf(0.75*np.pi) - rv.cdf(0.25*np.pi),2)
+                    tp[s-1] = 1.0 - np.sum(copy.deepcopy(tp))
+
+            elif (s % self.grid_size[1] == self.grid_size[1]-1):
+                # Just East
+                tp[s-self.grid_size[1]] = round(rv.cdf(0.75*np.pi) - rv.cdf(0.25*np.pi),2)
+                tp[s-1] = round(rv.cdf(np.pi) - rv.cdf(0.75*np.pi) + rv.cdf(-0.75*np.pi) - rv.cdf(-np.pi),2)
+                tp[s+self.grid_size[1]] =  1.0 - np.sum(copy.deepcopy(tp))
+
+            elif (s % self.grid_size[1] == 0):
+                # Just West
+                tp[s+1] = round((rv.cdf(0.25*np.pi) - rv.cdf(-0.25*np.pi)),2)
+                tp[s-self.grid_size[1]] = round(rv.cdf(0.75*np.pi) - rv.cdf(0.25*np.pi),2)
+                tp[s+self.grid_size[1]] =  1.0 - np.sum(copy.deepcopy(tp))
+
+        tp = tp.round(2)
+        if (not np.all(tp>=0)) or (abs(np.sum(tp) - 1.0) >=  1e-8):
+            print(tp)
+            raise Exception('Invalid distribution for state {} and action {}'.format(s,a))
+        else:
+            return tp
 
     def _generate_stochastic_dynamics(self, s, a):
         """
