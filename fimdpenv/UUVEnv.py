@@ -212,6 +212,67 @@ class SynchronousMultiAgentEnv:
                 tp[s-self.grid_size[1]] = round(rv.cdf(0.75*np.pi) - rv.cdf(0.25*np.pi),2)
                 tp[s+self.grid_size[1]] =  1.0 - np.sum(copy.deepcopy(tp))
 
+        elif self.num_actions == 16:
+            if (s - self.grid_size[1] < 0):
+                if (s % self.grid_size[1] == self.grid_size[1]-1):
+                    # North East
+                    tp[s-1] = round(rv.cdf(np.pi) - rv.cdf(0.875*np.pi) + rv.cdf(-0.875*np.pi) - rv.cdf(-np.pi),2)
+                    tp[s+self.grid_size[1]] = round(rv.cdf(-0.375*np.pi) - rv.cdf(-0.625*np.pi),2)
+                    tp[s+self.grid_size[1]-1] =  1.0 - np.sum(copy.deepcopy(tp)) 
+
+                elif (s % self.grid_size[1] == 0):
+                    # North West
+                    tp[s+1] = round(rv.cdf(0.125*np.pi) - rv.cdf(-0.125*np.pi),2)
+                    tp[s+self.grid_size[1]] = round(rv.cdf(-0.375*np.pi) - rv.cdf(-0.625*np.pi),2)
+                    tp[s+self.grid_size[1]+1] =  1.0 - np.sum(copy.deepcopy(tp))  
+
+                else:
+                    # Just North
+                    tp[s+1] = round(rv.cdf(0.125*np.pi) - rv.cdf(-0.125*np.pi),2)
+                    tp[s-1] = round(rv.cdf(np.pi) - rv.cdf(0.875*np.pi) + rv.cdf(-0.875*np.pi) - rv.cdf(-np.pi),2)
+                    tp[s+self.grid_size[1]] = round(rv.cdf(-0.375*np.pi) - rv.cdf(-0.625*np.pi),2)
+                    tp[s+self.grid_size[1]-1] = round(rv.cdf(-0.625*np.pi) - rv.cdf(-0.875*np.pi),2)
+                    tp[s+self.grid_size[1]+1] =  1.0 - np.sum(copy.deepcopy(tp))  
+
+            elif (s + self.grid_size[1] >= self.num_states):
+                if (s % self.grid_size[1] == self.grid_size[1]-1):
+                    # South East
+                    tp[s-self.grid_size[1]] = round(rv.cdf(0.625*np.pi) - rv.cdf(0.375*np.pi),2)
+                    tp[s-1] = round(rv.cdf(np.pi) - rv.cdf(0.875*np.pi) + rv.cdf(-0.875*np.pi) - rv.cdf(-np.pi),2)
+                    tp[s-self.grid_size[1]-1] = 1.0 - np.sum(copy.deepcopy(tp))   
+
+                elif (s % self.grid_size[1] == 0):
+                    # South West
+                    tp[s+1] = round(rv.cdf(0.125*np.pi) - rv.cdf(-0.125*np.pi),2)
+                    tp[s-self.grid_size[1]] = round(rv.cdf(0.625*np.pi) - rv.cdf(0.375*np.pi),2)
+                    tp[s-self.grid_size[1]+1] = 1.0 - np.sum(copy.deepcopy(tp))   
+
+                else:
+                    # Just South
+                    tp[s+1] = round(rv.cdf(0.125*np.pi) - rv.cdf(-0.125*np.pi),2)
+                    tp[s-self.grid_size[1]] = round(rv.cdf(0.625*np.pi) - rv.cdf(0.375*np.pi),2)
+                    tp[s-1] = round(rv.cdf(np.pi) - rv.cdf(0.875*np.pi) + rv.cdf(-0.875*np.pi) - rv.cdf(-np.pi),2)
+                    tp[s-self.grid_size[1]+1] = round(rv.cdf(0.375*np.pi) - rv.cdf(0.125*np.pi),2)
+                    tp[s-self.grid_size[1]-1] =  1.0 - np.sum(copy.deepcopy(tp))  
+
+            elif (s % self.grid_size[1] == self.grid_size[1]-1):
+                # Just East
+                tp[s-self.grid_size[1]] = round(rv.cdf(0.625*np.pi) - rv.cdf(0.375*np.pi),2)
+                tp[s-1] = round(rv.cdf(np.pi) - rv.cdf(0.875*np.pi) + rv.cdf(-0.875*np.pi) - rv.cdf(-np.pi),2)
+                tp[s+self.grid_size[1]] = round(rv.cdf(-0.375*np.pi) - rv.cdf(-0.625*np.pi),2)
+                tp[s-self.grid_size[1]-1] = round(rv.cdf(0.875*np.pi) - rv.cdf(0.625*np.pi),2)
+                tp[s+self.grid_size[1]-1] =  1.0 - np.sum(copy.deepcopy(tp))  
+
+            elif (s % self.grid_size[1] == 0):
+                # Just West
+                tp[s+1] = round(rv.cdf(0.125*np.pi) - rv.cdf(-0.125*np.pi),2)
+                tp[s-self.grid_size[1]] = round(rv.cdf(0.625*np.pi) - rv.cdf(0.375*np.pi),2)
+                tp[s+self.grid_size[1]] = round(rv.cdf(-0.375*np.pi) - rv.cdf(-0.625*np.pi),2)
+                tp[s-self.grid_size[1]+1] = round(rv.cdf(0.375*np.pi) - rv.cdf(0.125*np.pi),2)
+                tp[s+self.grid_size[1]+1] =  1.0 - np.sum(copy.deepcopy(tp))  
+        else:
+            raise Exception('Infeasible actions in the action space. ')
+
         tp = tp.round(2)
         if (not np.all(tp>=0)) or (abs(np.sum(tp) - 1.0) >=  1e-8):
             print(tp)
