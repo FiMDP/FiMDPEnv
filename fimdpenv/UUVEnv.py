@@ -10,7 +10,7 @@ import matplotlib.animation as animation
 
 class SynchronousMultiAgentEnv:
 
-    def __init__(self, num_agents, grid_size, capacities, reloads, targets, init_states=None, enhanced_actionspace=0, weakaction_cost=1, strongaction_cost=2, velocity=5, heading_sd=0.524):
+    def __init__(self, num_agents, grid_size, capacities, reloads, targets, init_states=None, enhanced_actionspace=0, weakaction_cost=1, strongaction_cost=2, velocity=5, heading_sd=0.524, agents_colors=None):
         """Class that models a Markov Decision Process where the agents and the environment model the dynamics of multiple UUV and 
         the ocean currents it is operating in. All transitions in the environment are synchronous. 
         """
@@ -31,7 +31,7 @@ class SynchronousMultiAgentEnv:
         self.positions = [None for agent in self.agents]
         self.strategies = [None for agent in self.agents]
         self.agent_done = [0 for agent in self.agents]
-        self.agents_colors = None
+        self.agents_colors = agents_colors
         
         # logging attributes
         self.state_histories = [[] for agent in self.agents]
@@ -77,7 +77,8 @@ class SynchronousMultiAgentEnv:
         
         # initialize environment and create consmdp
         self.trans_prob = self._generate_dynamics()
-        self._create_agents_colors()
+        if self.agents_colors is None:
+            self._create_agents_colors()
         self.reset()
         self._add_reloads()
         self.create_consmdp()
@@ -484,7 +485,7 @@ class SynchronousMultiAgentEnv:
         if self.positions[agent] in self.targets_alloc[agent]:
             if self.positions[agent] not in self.target_histories[agent]:
                 self.target_histories[agent].append(self.positions[agent])
-        self.agent_done = 0
+        self.agent_done = [0 for agent in self.agents]
         self.num_timesteps = 0   
                      
 
@@ -502,33 +503,35 @@ class SynchronousMultiAgentEnv:
         if energies is None:
             energies = self.energies
         
-        # selection action and update states
-        actions = [self.label_to_action[strategy.next_action().label] for strategy in self.strategies]
-        done = [0 for agent in self.agents]
-        
+        actions = []
         for agent in self.agents:
-            if actions[agent] == -1:
-                done[agent] == 1
+            if self.agent_done[agent] == 1:
+                actions.append(None)
+                continue
+            
+            action = self.label_to_action[self.strategies[agent].next_action().label]
+            actions.append(action)
+            if action == -1:
+                self.agent_done[agent] == 1
                 continue
             else:
                 self.positions[agent] = np.random.choice(self.num_states,
-                    p=self.trans_prob[self.positions[agent], actions[agent], :])
+                    p=self.trans_prob[self.positions[agent], action, :])
                 self.strategies[agent].update_state(self.positions[agent])
                 self.energies[agent] = self.strategies[agent].energy
         
-            # update and render
-            self.state_histories[agent].append(self.positions[agent])
-            self.action_histories[agent].append(actions[agent])
-            if self.positions[agent] in self.targets_alloc[agent]:
-                if self.positions[agent] not in self.target_histories[agent]:
-                    self.target_histories[agent].append(self.positions[agent])
+                # update and render
+                self.state_histories[agent].append(self.positions[agent])
+                self.action_histories[agent].append(action)
+                if self.positions[agent] in self.targets_alloc[agent]:
+                    if self.positions[agent] not in self.target_histories[agent]:
+                        self.target_histories[agent].append(self.positions[agent])
         self.num_timesteps += 1
         if do_render == 1:
             self.render_grid()
-        info = (self.positions, actions, self.energies, done)
+        info = (self.positions, actions, self.energies, self.agent_done)
         return info
      
-        
     def _create_agents_colors(self):
         """
         Create and store colors for visualizing agents
@@ -645,6 +648,121 @@ class SynchronousMultiAgentEnv:
             return im
         return animation.FuncAnimation(fig, updatefig, frames=num_steps, interval=interval)
 
+    def animate_seqsimulation(self, solver=GoalLeaningES, objective=BUCHI, threshold=0.3, rth=False, interval=100, save=False):
+        """
+        Simulates and animates the trajectory of the agents covering a sequence of targets allocated to it 
+        apriori by updating the strategies online. Agent remains at initial state when no targets are allocated.
+        """
+
+        sim_data = self._simulate_seqsimulation(rth=rth, solver=solver, objective=objective, threshold=threshold)
+        num_steps = len(sim_data['time'])
+        fig = plt.figure()
+        ax = fig.gca()
+        ax.axis('off')
+        im = plt.imshow(sim_data['image'][0], animated=True)
+    
+        def updatefig(frame_count):
+            if frame_count == 0: 
+                im.set_array(sim_data['image'][0])
+                ax.set_title("Agent Energy: {}, Time Steps: {}".format(sim_data['energy'][0], sim_data['time'][0]))
+                return im
+            im.set_array(sim_data['image'][frame_count])
+            ax.set_title("Agent Energy: {}, Time Steps: {}".format(sim_data['energy'][frame_count], sim_data['time'][frame_count]))
+            return im
+        anim = animation.FuncAnimation(fig, updatefig, frames=num_steps, interval=interval)
+        plt.close()
+        if save == True:
+            anim.save('synchronousmultiagentenv.gif', writer='imagemagick')
+        return anim
+
+    def _simulate_seqsimulation(self, rth=False, solver=GoalLeaningES, objective=BUCHI, threshold=0.3, max_timesteps=500):
+        """
+        Internal function to run simulation and generate data of trajectories that sequentially cover
+        pre-allocated targets of the agent. Returns the render data for visualization.
+        """
+        
+        # generate strategies
+        strategies_dict = {}
+        for agent in self.agents:
+            for target in list(set(self.targets_alloc[agent]).union(set([self.init_states[agent]]))):
+                if solver == GoalLeaningES:
+                    slvr = GoalLeaningES(self.consmdp, self.capacities[agent], [target], threshold=threshold)
+                elif solver == BasicES:
+                    slvr = BasicES(self.consmdp, self.capacities[agent], [target])
+                selector = slvr.get_selector(objective)
+                strategy = CounterStrategy(self.consmdp, selector, self.capacities[agent], self.energies[agent], init_state=self.init_states[agent])
+                strategies_dict[target] = strategy          
+
+        # function for updating targets online
+        def next_target(agent, rth):
+            """
+            For a given agent, return next target in the original sequence that is 
+            not yet explored by that particular agent. If all targets are visited,
+            return the initial state or terminate depending on rth flag.
+            """
+
+            initial_position = self.init_states[agent]
+            targets_alloc = self.targets_alloc[agent]
+            targets_covered = list(set(self.target_histories[agent]))
+            targets_remaining = [s for s in targets_alloc if s not in targets_covered]
+
+            # select target
+            if len(targets_remaining) == 0 and rth == True:
+                next_target = initial_position
+            else:  
+                next_target = targets_remaining[0]
+            return next_target
+        
+        # initialize variables for simulation
+        self.reset(self.init_states)
+        sim_data = {'image':[self._states_to_colors()],
+                'energy':[copy.deepcopy(self.energies)],
+                'time':[self.num_timesteps]}
+        
+        # initialize agent status
+        for agent in self.agents:
+            if self.targets_alloc[agent] == []:
+                self.agent_done[agent] = 1
+
+        # run simulation until all agents finish mission
+        while True:
+            # initial strategy update
+            if self.num_timesteps == 0:
+                for agent in self.agents:
+                    if self.agent_done[agent] == 0:
+                        self.update_strategy(strategies_dict[next_target(agent, rth)], agent)
+                        self.strategies[agent].reset(init_state=self.positions[agent], init_energy=self.energies[agent])
+        
+            # online strategy update
+            for agent in self.agents:
+                if self.agent_done[agent] == 0:
+                    if self.positions[agent] in self.targets_alloc[agent]:
+                        self.update_strategy(strategies_dict[next_target(agent, rth)], agent)
+                        self.strategies[agent].reset(init_state=self.positions[agent], init_energy=self.energies[agent])
+        
+            # take action and store data
+            self.step()
+            sim_data['image'].append(self._states_to_colors())
+            sim_data['energy'].append(copy.deepcopy(self.energies))
+            sim_data['time'].append(self.num_timesteps)
+        
+            # update agent status upon termination
+            for agent in self.agents:
+                if rth == True:
+                    if  self.positions[agent] == self.init_states[agent] and \
+                        set(self.targets_alloc[agent]) == set(self.target_histories[agent]):
+                            self.agent_done[agent] = 1
+                elif rth == False:
+                    if set(self.targets_alloc[agent]) == set(self.target_histories[agent]):
+                        self.agent_done[agent] = 1
+      
+            # terminate
+            if self.agent_done == [1 for agent in self.agents]:
+                break
+            elif self.num_timesteps >= max_timesteps:
+                raise Exception('Simulation terminated. Reached max time steps before covering all targets.')
+    
+        return sim_data
 
     def _repr_png_(self):
         """
@@ -653,8 +771,6 @@ class SynchronousMultiAgentEnv:
         return self.render_grid()
     
     
-
-
 class SingleAgentEnv(SynchronousMultiAgentEnv):
     """Class that models a Markov decision process where the agent and the environment model the dynamics of a UUV and 
         the ocean currents it is operating in. This class is heavily inherits from the SynchronousMultiAgentEnv class. 
