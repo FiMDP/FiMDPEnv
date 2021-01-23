@@ -307,7 +307,10 @@ class SynchronousMultiAgentEnv:
             tp[s-self.grid_size[1]+1] = round(rv.cdf(0.375*np.pi) - rv.cdf(0.125*np.pi),2)
             tp[s-self.grid_size[1]-1] = round(rv.cdf(0.875*np.pi) - rv.cdf(0.625*np.pi),2)
             tp[s+self.grid_size[1]-1] = round(rv.cdf(-0.625*np.pi) - rv.cdf(-0.875*np.pi),2)
-            tp[s+self.grid_size[1]+1] =  1.0 - np.sum(copy.deepcopy(tp))  
+            if np.sum(tp) < 1:
+                tp[s+self.grid_size[1]+1] =  1.0 - np.sum(copy.deepcopy(tp)) 
+            else: 
+                tp[s+self.grid_size[1]+1] = 0.0
             tp = tp.round(2)
          
         if (not np.all(tp>=0)) or (abs(np.sum(tp) - 1.0) >=  1e-8):
@@ -537,7 +540,7 @@ class SynchronousMultiAgentEnv:
         agents_colors = {}
         for agent in self.agents:
             agents_colors[agent] = agentcolor_options[agent]*np.ones(3)
-        agents_colors[0] = np.array([0.42,0.42,0.42])
+        agents_colors[0] = np.array([0.45,0.45,0.45])
         self.agents_colors = agents_colors      
 
 
@@ -572,11 +575,11 @@ class SynchronousMultiAgentEnv:
         '''
         
         # Define colors
-        # 0: light blue; 1 : light gray; 2 : dark gray; 3 : green; 4 : orange; 5: dark blue
+        # 0: light blue; 1 : light gray; 2 : dark gray; 3 : brown; 4 : red; 5: dark blue
         
-        COLORS_ENV = {0:np.array([0.85,1.0,1.0]), 1:np.array([0.54,0.54,0.54]), \
-                  2:np.array([0.42,0.42,0.42]), 3:np.array([0.0,1.0,0.0]), \
-                      4:np.array([1.0,0.37,0.008]), 5:np.array([0.0,0.0,1.0])}
+        COLORS_ENV = {0:np.array([0.678,0.847, 0.902]), 1:np.array([0.54,0.54,0.54]), \
+                  2:np.array([0.42,0.42,0.42]), 3:np.array([0.0078,0.5450, 0.0666]), \
+                      4:np.array([1.0,0.0,0.0]), 5:np.array([0.1529,0.5019,0.8705])}
         COLORS_AGENTS = self.agents_colors            
         
         data = np.zeros([self.grid_size[0],self.grid_size[1],3],dtype=np.float32)
@@ -585,15 +588,16 @@ class SynchronousMultiAgentEnv:
             for cell in self.state_histories[agent]:
                 (x,y) = self.get_state_coord(cell)
                 data[x, y] = COLORS_AGENTS[agent] # history
+        for agent in self.agents:
+            (x,y) = self.get_state_coord(self.positions[agent])
+            data[x,y] = COLORS_AGENTS[agent] # current state
         for cell in self.targets:
             (x,y) = self.get_state_coord(cell)
             data[x,y] = COLORS_ENV[3] # targets
         for cell in self.reloads:
             (x,y) = self.get_state_coord(cell)
             data[x,y] = COLORS_ENV[4] # reloads
-        for agent in self.agents:
-            (x,y) = self.get_state_coord(self.positions[agent])
-            data[x,y] = COLORS_AGENTS[agent] # current state
+
             if self.init_states is not None:
                 (x,y) = self.get_state_coord(self.init_states[agent])
                 data[x,y] = COLORS_ENV[5] # home/base        
